@@ -17,8 +17,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * RSA工具类应用示例
  * 可用于生成公私密钥对，base64编码字符串
- * 公钥加密/私钥解密数据，私钥加密/公钥解密数据
+ * 公钥加密/私钥解密数据，私钥加密/公钥解密数据，RSA算法有限制最大长度，超长则需要分块加密解密，未实现
  * 私钥加签，公钥解签/验签
+ * 生成数字摘要的base64编码字符串
  * @author cent
  * @version 1.0 2019-06-09
  */
@@ -29,6 +30,7 @@ public class RSAUtil {
     private static final String KEY_ALG_TYPE = "RSA";
     // 生成签名算法类型，加签/验签算法类型
     private static final String SIGN_ALG_TYPE = "MD5withRSA";
+//    private static final String SIGN_ALG_TYPE = "SHA256withRSA";
 
     /**
      * 生成base64编码密钥对
@@ -234,4 +236,22 @@ public class RSAUtil {
         }
         return false;
     }
+
+    /**
+     * 根据算法类型生成数据的数字摘要
+     * @param data 数据
+     * @param algorithm 算法类型，MD2/MD5/SHA-1/SHA-256/SHA-384/SHA-512
+     * @return 数字摘要的base64字符串
+     */
+    public static String messageDigest(String data, String algorithm) {
+        try {
+            MessageDigest md = MessageDigest.getInstance(algorithm);
+            md.update(data.getBytes(UTF_8));
+            return Base64.getEncoder().encodeToString(md.digest());
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
+

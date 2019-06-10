@@ -47,10 +47,10 @@ public class Controller {
     @PostMapping(value = "/rsa", produces = "application/json;charset=UTF-8")
     public JSONObject rsa(@RequestBody JSONObject jsonObject) {
 
-        Map<String, String> map = new TreeMap<>();
+        Map<String, String> treeMapData = new TreeMap<>();
         for (String key : jsonObject.keySet()) {
             String value = jsonObject.getObject(key, String.class);
-            map.put(key, value);
+            treeMapData.put(key, value);
         }
 
         String publicKey = jsonObject.getString("uk");
@@ -71,12 +71,15 @@ public class Controller {
         jsonObject.put("encryptDataByPrivateKey", encryptData);
         jsonObject.put("decryptDataByPublicKey", decryptData);
 
-        // 模式私钥加签/公钥解签
-        String signByPrivateKey = RSAUtil.encryptByPrivateKey(privateKey, data);
-        String unsignData = RSAUtil.decryptByPublicKey(publicKey, signByPrivateKey);
-        jsonObject.put("checkSign", Boolean.toString(data.equals(unsignData)));
-        jsonObject.put("signByPrivateKey", signByPrivateKey);
-        jsonObject.put("unsignData", unsignData);
+        // 模式私钥加签/公钥解签，RSA加密数据有最大长度限制，因此先获取数据摘要信息，数字摘要较短，用于加密解密校验
+//        String messageDigest = RSAUtil.messageDigest(treeMapData.toString(), "MD5");
+        String messageDigest = RSAUtil.messageDigest(treeMapData.toString(), "SHA-256");
+        String mdSign = RSAUtil.encryptByPrivateKey(privateKey, messageDigest);
+        String mdUnsign = RSAUtil.decryptByPublicKey(publicKey, mdSign);
+        jsonObject.put("md", messageDigest);
+        jsonObject.put("checkSign", Boolean.toString(messageDigest.equals(mdUnsign)));
+        jsonObject.put("mdSign", mdSign);
+        jsonObject.put("mdUnsign", mdUnsign);
 
         return jsonObject;
     }
@@ -96,14 +99,14 @@ public class Controller {
     @PostMapping(value = "/sign", produces = "application/json;charset=UTF-8")
     public JSONObject sign(@RequestBody JSONObject jsonObject) {
 
-        Map<String, String> map = new TreeMap<>();
+        Map<String, String> treeMap = new TreeMap<>();
         for (String key : jsonObject.keySet()) {
             String value = jsonObject.getObject(key, String.class);
-            map.put(key, value);
+            treeMap.put(key, value);
         }
 
         String privateKey = jsonObject.getString("rk");
-        String sign = RSAUtil.sign(privateKey, map.toString());
+        String sign = RSAUtil.sign(privateKey, treeMap.toString());
         jsonObject.put("sign", sign);
 
         return jsonObject;
@@ -126,17 +129,17 @@ public class Controller {
     public JSONObject verify(@RequestBody JSONObject jsonObject) {
 
         String sign = null;
-        Map<String, String> map = new TreeMap<>();
+        Map<String, String> treeMap = new TreeMap<>();
         for (String key : jsonObject.keySet()) {
             String value = jsonObject.getObject(key, String.class);
             if (key.equals("sign"))
                 sign = value;
             else
-                map.put(key, value);
+                treeMap.put(key, value);
         }
 
         String publicKey = jsonObject.getString("uk");
-        jsonObject.put("verify", Boolean.toString(RSAUtil.verify(publicKey, map.toString(), sign)));
+        jsonObject.put("verify", Boolean.toString(RSAUtil.verify(publicKey, treeMap.toString(), sign)));
 
         return jsonObject;
     }
