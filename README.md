@@ -7,4 +7,5 @@
 - get message digest of data with algorithm.
 
 ## todo
-[x] rsa with max length limit, block to encrypt/decrypt data.
+-[x] hmac util and a sample demo.  
+-[ ] rsa with max length limit, block to encrypt/decrypt data.

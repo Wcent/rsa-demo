@@ -1,10 +1,12 @@
 package org.cent.rsademo.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import org.cent.rsademo.util.HmacUtil;
 import org.cent.rsademo.util.RSAUtil;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -140,6 +142,19 @@ public class Controller {
 
         String publicKey = jsonObject.getString("uk");
         jsonObject.put("verify", Boolean.toString(RSAUtil.verify(publicKey, treeMap.toString(), sign)));
+
+        return jsonObject;
+    }
+
+    @PostMapping(value = "/hmac")
+    public JSONObject hmac(@RequestBody JSONObject jsonObject) {
+        String secretKey = jsonObject.getString("secretKey");
+        String data = jsonObject.getString("data");
+        String base64 = Base64.getEncoder().encodeToString(secretKey.getBytes());
+
+        jsonObject.put("skBase64", base64);
+        jsonObject.put(HmacUtil.HMACSHA256, HmacUtil.hmac(base64, HmacUtil.HMACSHA256, data));
+        jsonObject.put(HmacUtil.HMACSHA512, HmacUtil.hmac(base64, HmacUtil.HMACSHA512, data));
 
         return jsonObject;
     }
